@@ -1,3 +1,68 @@
+# 抖音无水印下载
+
+> 篝火出品 · 仅开源，不上架篝火 App 应用区 · 基于开源项目 [Evil0ctal/Douyin_TikTok_Download_API](https://github.com/Evil0ctal/Douyin_TikTok_Download_API)（Apache-2.0）
+
+> [!WARNING]
+> 本工具涉及第三方平台的自动化或内容获取，存在账号被限制、违反平台规则或侵权的风险，仅供学习研究。请遵守平台规则与法律法规，使用后果自负。
+> **只下载你自己有权使用的内容**（自己发布的作品、已获得作者授权的作品）。不要用它搬运、二次分发不属于你的作品，也不要用于骚扰他人。
+
+在自己的电脑或服务器上跑一个服务，粘贴抖音 / TikTok / B 站的链接或分享文案，解析作品并下载平台提供的无水印视频、图集，也能取作者资料、评论等；有 Web 控制台，也有 REST API 和 MCP。
+
+## 部署
+
+需要一台装好 Docker 和 Docker Compose 的电脑或服务器，以及 `openssl`（Mac / Linux 自带；Windows 请在 WSL 或 Git Bash 里执行）。首次启动要拉取数个镜像，需联网。
+
+```bash
+mkdir douyin-downloader && cd douyin-downloader
+# 到 Releases 下载 docker-compose.yml 和 .env.example 放进来
+cp .env.example .env
+# 按 .env 里的注释，用 openssl 生成并填好 DTK_SECRET_KEY、POSTGRES_PASSWORD、REDIS_PASSWORD
+docker compose up -d
+docker compose logs api     # 日志里有首次设置链接，包含一次性令牌
+```
+
+打开日志里的链接（形如 `http://127.0.0.1:8000/setup?token=...`），创建第一个管理员账号，之后访问 <http://127.0.0.1:8000>。
+
+- 默认**只绑定本机 127.0.0.1**。需要远程访问请自己加带密码和 HTTPS 的反向代理，不要直接改成对公网开放。
+- 日志里的首次设置令牌只用于创建管理员，**不要把容器日志公开发出来**。
+- `DTK_SECRET_KEY` 用来加密库里保存的 cookie，丢了就读不出来，请和数据库一起备份。
+- 本包不含浏览器容器：抖音 / TikTok 的访客身份无法自动铸造，需要在控制台「身份池」里导入你自己的浏览器 cookie；导入登录身份后能看到更多内容。**cookie 等同账号凭据，只放在自己机器上。**
+- 下载的视频存在 Docker 卷 `media-data` 里。下载器镜像直接使用上游发布的 `evil0ctal/douyin_tiktok_download_api-downloader:5.1.7`。
+
+## 怎么用
+
+1. 打开控制台，到「身份池」导入一份自己浏览器里的抖音 cookie（上游文档：`documents/zh/`）。
+2. 粘贴作品链接或分享文案解析；下载时拿到的是平台本来就提供的无水印流。
+3. 接口文档在控制台 `/docs`；REST 接口在 `/api/v1/...`，MCP 在 `/mcp`。
+
+**保守使用建议**：不要批量、高频抓取，不要开启定时监控大量账号，以免触发平台风控导致账号被限制。
+
+界面中文 / 英文双语，接口文档为中英双语。需要联网；需要自己的抖音 cookie；不需要显卡。
+
+## 验收用例
+
+| 操作 | 应得到 |
+|---|---|
+| `docker compose up -d` 后 `curl http://127.0.0.1:8000/readyz` | 返回 200 |
+| `docker ps` 查看 api 端口 | 显示 `127.0.0.1:8000->8000/tcp`，不是 `0.0.0.0` |
+| 打开设置链接创建管理员并登录 | 进入控制台 |
+| 导入 cookie 后粘贴一条自己有权使用的抖音作品链接解析并下载 | 得到无水印视频文件 |
+
+## 和上游的区别
+
+- 新增本中文说明与篝火发布流程（`tool.json`、`.github/workflows/release.yml`、`campfire/` 里的单机部署文件）。
+- 移除了上游依赖其密钥的工作流（CI、CodeQL、镜像发布）。
+- 部署文件是上游 `docker/compose.yml` 的精简版：去掉了可选的浏览器 / 转写容器，数据库和 Redis 只在内部网络，容器权限收紧的设置保持不变。
+- 日志检查：上游日志只记录 cookie 数量，不打印 cookie / token 内容；首次设置令牌会打印到 api 日志（用于创建管理员，一次性）。软件代码与上游一致。
+
+## 归属与许可证
+
+本工具基于 [Evil0ctal/Douyin_TikTok_Download_API](https://github.com/Evil0ctal/Douyin_TikTok_Download_API) v5.1.7，Apache License 2.0，LICENSE 与 NOTICE 原文保留，版权归原作者所有。
+
+---
+
+以下为上游原文 README。
+
 <div align="center">
 <a href="https://douyin.wtf/" alt="logo"><img src="./logo/logo.svg" width="120" alt="Douyin_TikTok_Download_API"/></a>
 </div>

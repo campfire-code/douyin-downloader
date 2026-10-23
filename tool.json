@@ -1,0 +1,10 @@
+{
+  "id": "c30",
+  "slug": "douyin-downloader",
+  "name": "抖音无水印下载",
+  "version": "5.1.7-campfire.1",
+  "repo": "campfire-code/douyin-downloader",
+  "license": "Apache-2.0",
+  "delivery": "docker",
+  "upstream": { "repo": "Evil0ctal/Douyin_TikTok_Download_API", "license": "Apache-2.0", "tag": "v5.1.7" }
+}
